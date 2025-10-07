@@ -1,0 +1,180 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class AddProductForm extends StatefulWidget {
+  const AddProductForm({super.key});
+
+  @override
+  State<AddProductForm> createState() => _AddProductFormState();
+}
+
+class _AddProductFormState extends State<AddProductForm> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _rateController = TextEditingController();
+  String? _selectedUnitType;
+
+  final List<String> _unitTypes = ['kg', 'unit', 'piece', 'bale'];
+  bool _isLoading = false;
+
+  final String _baseUrl = 'http://192.168.8.26:5000';
+
+  Future<void> _submitProduct() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final name = _nameController.text.trim();
+    final rate = double.tryParse(_rateController.text.trim());
+    final unitType = _selectedUnitType;
+
+    if (rate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid rate')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/products'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'unit_type': unitType,
+          'rate': rate,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        Navigator.pop(context, true);
+      } else {
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Something went wrong';
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error)));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add product: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Colors.blue; // brand orange
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: primaryColor,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "Add New Product",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Card(
+            elevation: 4,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Product Name',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Enter product name'
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    value: _selectedUnitType,
+                    items: _unitTypes
+                        .map((type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type.toUpperCase()),
+                            ))
+                        .toList(),
+                    onChanged: (value) =>
+                        setState(() => _selectedUnitType = value),
+                    decoration: InputDecoration(
+                      labelText: 'Unit Type',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    validator: (value) =>
+                        value == null ? 'Select unit type' : null,
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _rateController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Rate (per selected unit)',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter rate';
+                      }
+                      if (double.tryParse(value) == null) {
+                        return 'Enter valid number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitProduct,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 30),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Add Product',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
