@@ -44,5 +44,5 @@ It allows users to register products with their pricing models (per kg, per unit
 
 ---
 
-## 📂 Project Structure
+
 
