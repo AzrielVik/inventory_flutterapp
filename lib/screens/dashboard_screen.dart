@@ -60,12 +60,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchSales() async {
     try {
-      final sales = await ApiService.getSales();
-      setState(() {
-        _allSales = sales;
-        _applyFilter(_sortOption);
-        _isLoading = false;
-      });
+      final user = await AuthService.getUser();
+final sales = await ApiService.fetchSales(userId: user!.$id);
+setState(() {
+  _allSales = sales;
+  _applyFilter(_sortOption);
+  _isLoading = false;
+});
     } catch (e) {
       debugPrint("Failed to load sales: $e");
       setState(() => _isLoading = false);

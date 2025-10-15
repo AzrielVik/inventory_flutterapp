@@ -25,13 +25,16 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   Future<void> fetchSales() async {
-    try {
-      final sales = await ApiService.getSales();
-      setState(() {
-        allSales = sales;
-        filteredSales = sales;
-        isLoading = false;
-      });
+  try {
+    final user = await AuthService.getUser();
+    if (user == null) throw Exception('User not logged in');
+
+    final sales = await ApiService.fetchSales(userId: user.$id);
+    setState(() {
+      allSales = sales;
+      filteredSales = sales;
+      isLoading = false;
+    });
     } catch (e) {
       debugPrint('Error fetching sales: $e');
       setState(() => isLoading = false);

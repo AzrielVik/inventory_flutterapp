@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../auth_screens/login_screen.dart';
 import 'package:appwrite/models.dart' as appwrite_models;
-import 'package:appwrite/appwrite.dart';
+import 'package:appwrite/appwrite.dart' show AppwriteException;
 import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -18,7 +18,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
   String? _companyName;
   String? _profilePhotoUrl;
-
   bool _loading = true;
 
   @override
@@ -49,6 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _forceLogout();
       } else {
         setState(() => _loading = false);
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: ${e.message}")),
         );
@@ -56,6 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       debugPrint("❌ Other Error in Profile: $e");
       setState(() => _loading = false);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Unexpected Error: $e")),
       );
@@ -64,26 +65,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _forceLogout() async {
     await AuthService.logout();
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-    }
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   void _logout() async {
     try {
       await AuthService.logout();
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      }
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Logout failed: $e")),
       );
@@ -157,8 +157,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     if (newPhotoUrl != null && File(newPhotoUrl!).existsSync()) {
                       try {
-                        uploadedPhotoUrl = newPhotoUrl; // placeholder
+                        // Placeholder for upload logic (e.g. Cloudinary)
+                        uploadedPhotoUrl = newPhotoUrl;
                       } catch (e) {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Image upload failed: $e")),
                         );
@@ -178,6 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'photoUrl': uploadedPhotoUrl ?? "",
                       });
 
+                      if (!mounted) return;
                       setState(() {
                         _name = updatedName;
                         _companyName = updatedCompany;
@@ -189,6 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                       Navigator.pop(dialogContext);
                     } catch (e) {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Failed to update profile: $e")),
                       );
@@ -275,7 +279,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 icon: const Icon(Icons.logout, color: Colors.white),
                 label: const Text(
@@ -294,8 +299,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         Text(value, style: const TextStyle(fontSize: 16)),
       ],
     );

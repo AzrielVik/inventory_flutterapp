@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart'; 
+import 'package:appwrite/models.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
 
@@ -11,22 +11,36 @@ class ApiService {
 
   // -------------------- PRODUCT ENDPOINTS --------------------
 
-  static Future<List<Product>> getProducts() async {
-    final response = await http.get(Uri.parse('$baseUrl/products'));
+  static Future<List<Product>> getProducts({required String userId}) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/products?user_id=$userId'),
+    );
+
     if (response.statusCode == 200) {
-      List jsonData = json.decode(response.body);
-      return jsonData.map((e) => Product.fromJson(e)).toList();
+      final data = json.decode(response.body);
+      final List<dynamic> productList =
+          data is List ? data : (data['documents'] ?? data['products'] ?? []);
+      return productList.map((e) => Product.fromJson(e)).toList();
     } else {
       throw Exception('Failed to load products');
     }
   }
 
-  static Future<Product> createProduct(Map<String, dynamic> data) async {
+  static Future<Product> createProduct(
+    Map<String, dynamic> data, {
+    required String userId,
+  }) async {
+    final payload = {
+      ...data,
+      'user_id': userId,
+    };
+
     final response = await http.post(
       Uri.parse('$baseUrl/products'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(data),
+      body: json.encode(payload),
     );
+
     if (response.statusCode == 201) {
       return Product.fromJson(json.decode(response.body));
     } else {
@@ -56,11 +70,19 @@ class ApiService {
 
   // -------------------- SALE ENDPOINTS --------------------
 
-  static Future<Sale> createSale(Map<String, dynamic> data) async {
+  static Future<Sale> createSale(
+    Map<String, dynamic> data, {
+    required String userId,
+  }) async {
+    final payload = {
+      ...data,
+      'user_id': userId,
+    };
+
     final response = await http.post(
       Uri.parse('$baseUrl/sales'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(data),
+      body: json.encode(payload),
     );
 
     if (response.statusCode == 201) {
@@ -77,6 +99,7 @@ class ApiService {
     required String customerName,
     required double total,
     required String mpesaNumber,
+    required String userId,
     double? weightPerUnit,
     int? numUnits,
     String? checkoutId,
@@ -89,10 +112,11 @@ class ApiService {
         'mpesaNumber': mpesaNumber,
         if (weightPerUnit != null) 'weight_per_unit': weightPerUnit,
         if (numUnits != null) 'num_units': numUnits,
-        if (checkoutId != null && checkoutId.isNotEmpty) 'checkoutId': checkoutId,
+        if (checkoutId != null && checkoutId.isNotEmpty)
+          'checkoutId': checkoutId,
       };
 
-      await createSale(data);
+      await createSale(data, userId: userId);
       return true;
     } catch (e) {
       debugPrint('Error adding sale: $e');
@@ -100,22 +124,23 @@ class ApiService {
     }
   }
 
-  static Future<List<Sale>> fetchSales({String? date}) async {
+  static Future<List<Sale>> fetchSales({
+    String? date,
+    required String userId,
+  }) async {
     final uri = date != null
-        ? Uri.parse('$baseUrl/sales?date=$date')
-        : Uri.parse('$baseUrl/sales');
+        ? Uri.parse('$baseUrl/sales?date=$date&user_id=$userId')
+        : Uri.parse('$baseUrl/sales?user_id=$userId');
 
     final response = await http.get(uri);
     if (response.statusCode == 200) {
-      List jsonData = json.decode(response.body);
-      return jsonData.map((e) => Sale.fromJson(e)).toList();
+      final data = json.decode(response.body);
+      final List<dynamic> salesList =
+          data is List ? data : (data['documents'] ?? data['sales'] ?? []);
+      return salesList.map((e) => Sale.fromJson(e)).toList();
     } else {
       throw Exception('Failed to load sales');
     }
-  }
-
-  static Future<List<Sale>> getSales() async {
-    return await fetchSales();
   }
 
   static Future<Sale> fetchSaleById(String id) async {
@@ -156,8 +181,10 @@ class ApiService {
 
   // -------------------- STOCK ENDPOINT --------------------
 
-  static Future<Map<String, dynamic>> fetchStock() async {
-    final response = await http.get(Uri.parse('$baseUrl/stock'));
+  static Future<Map<String, dynamic>> fetchStock({
+    required String userId,
+  }) async {
+    final response = await http.get(Uri.parse('$baseUrl/stock?user_id=$userId'));
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -206,7 +233,6 @@ class AuthService {
 
   static final Account account = Account(client);
 
-  /// Signup with email/password
   static Future<User> signup({
     required String name,
     required String email,
@@ -220,54 +246,38 @@ class AuthService {
     );
   }
 
-  /// Login (create session)
   static Future<Session> login({
     required String email,
     required String password,
   }) async {
-    return await account.createEmailPasswordSession(
-      email: email,
-      password: password,
-    );
-  }
-
-  /// Logout (delete current session)
-  static Future<void> logout() async {
     try {
-      await account.deleteSession(sessionId: 'current');
-    } catch (_) {
-      // ignore if already logged out
+      return await account.createEmailPasswordSession(
+        email: email,
+        password: password,
+      );
+    } on AppwriteException catch (e) {
+      if (e.code == 401 && (e.message?.contains("session is active") ?? false)) {
+        await logout();
+        return await account.createEmailPasswordSession(
+          email: email,
+          password: password,
+        );
+      }
+      rethrow;
     }
   }
 
-  /// Send forgot password email
-  static Future<void> forgotPassword({
-    required String email,
-    required String redirectUrl,
-  }) async {
-    await account.createRecovery(email: email, url: redirectUrl);
+  static Future<void> logout() async {
+    try {
+      await account.deleteSession(sessionId: 'current');
+    } catch (_) {}
   }
 
-  /// Reset password after clicking email link
-  static Future<void> resetPassword({
-    required String userId,
-    required String secret,
-    required String newPassword,
-  }) async {
-    await account.updateRecovery(
-      userId: userId,
-      secret: secret,
-      password: newPassword,
-    );
-  }
-
-  /// Get logged in user (returns null if no valid session)
   static Future<User?> getUser() async {
     try {
       return await account.get();
     } on AppwriteException catch (e) {
       if (e.code == 401) {
-        // Invalid / expired session → clear and return null
         await logout();
         return null;
       }
@@ -275,23 +285,37 @@ class AuthService {
     }
   }
 
-  /// Update user name (Appwrite top-level field)
-  static Future<User> updateUserName(String newName) async {
+  // ---------- Update user name ----------
+  static Future<User> updateUserName(String name) async {
     try {
-      return await account.updateName(name: newName);
+      return await account.updateName(name: name);
     } on AppwriteException catch (e) {
-      debugPrint("Error updating name: ${e.message}");
-      rethrow;
+      throw Exception(e.message ?? "Failed to update user name");
     }
   }
 
-  /// Update user preferences (company name, photo URL, etc.)
+  // ---------- Update user preferences ----------
   static Future<User> updateUserPrefs(Map<String, dynamic> prefs) async {
     try {
-      return await account.updatePrefs(prefs: prefs);
+      await account.updatePrefs(prefs: prefs);
+      return await account.get(); // Return updated user info
     } on AppwriteException catch (e) {
-      debugPrint("Error updating prefs: ${e.message}");
-      rethrow;
+      throw Exception(e.message ?? "Failed to update user preferences");
+    }
+  }
+
+  // ---------- Forgot / Reset Password ----------
+  static Future<void> forgotPassword({
+    required String email,
+    required String redirectUrl,
+  }) async {
+    try {
+      await account.createRecovery(
+        email: email,
+        url: redirectUrl,
+      );
+    } on AppwriteException catch (e) {
+      throw Exception(e.message ?? "Failed to send password reset email");
     }
   }
 }

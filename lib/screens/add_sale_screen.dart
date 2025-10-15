@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../models/product.dart';
 import '../services/mpesa_service.dart';
 
+
 class AddSaleScreen extends StatefulWidget {
   const AddSaleScreen({super.key});
 
@@ -34,7 +35,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   }
 
   Future<void> _fetchProducts() async {
-    final products = await ApiService.getProducts();
+    final currentUser = await AuthService.getUser();
+    if (currentUser == null) return;
+
+    final products = await ApiService.getProducts(userId: currentUser.$id);
     setState(() {
       _products = products;
     });
@@ -112,6 +116,9 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   }
 
   Future<void> _submitSale() async {
+    final currentUser = await AuthService.getUser();
+    if (currentUser == null) return;
+
     if (!_formKey.currentState!.validate() ||
         _selectedProduct == null ||
         _totalPrice == null) return;
@@ -139,6 +146,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
         weightPerUnit: _selectedProduct!.unitType == 'kg' ? totalQuantity : null,
         numUnits: _selectedProduct!.unitType != 'kg' ? totalQuantity.toInt() : null,
         mpesaNumber: _isMpesa ? _mpesaController.text.trim() : "",
+        userId: currentUser.$id,
       );
 
       if (!mounted) return;
@@ -215,7 +223,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    // 🟠 Customer Info
+                    // Customer Info
                     _buildSectionTitle("Customer Info"),
                     _buildCard(
                       child: TextFormField(
@@ -232,7 +240,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       ),
                     ),
 
-                    // 🟠 Product Info
+                    // Product Info
                     _buildSectionTitle("Product Info"),
                     _buildCard(
                       child: DropdownButtonFormField<Product>(
@@ -268,7 +276,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                         ),
                       ),
 
-                    // 🟠 Payment Method
+                    // Payment Method
                     _buildSectionTitle("Payment Method"),
                     _buildCard(
                       child: Column(
@@ -324,7 +332,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       ),
                     ),
 
-                    // 🟠 Sale Details
+                    // Sale Details
                     if (_selectedProduct != null) ...[
                       _buildSectionTitle("Sale Details"),
                       _buildCard(
@@ -379,7 +387,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       ),
                     ],
 
-                    // 🟠 Calculate & Total
+                    // Calculate & Total
                     ElevatedButton(
                       onPressed: _selectedProduct != null ? _calculateTotal : null,
                       style: ElevatedButton.styleFrom(
@@ -403,7 +411,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                         ),
                       ),
 
-                    // 🟠 Submit
+                    // Submit
                     ElevatedButton.icon(
                       onPressed: _submitSale,
                       icon: const Icon(Icons.check_circle),

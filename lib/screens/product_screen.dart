@@ -22,13 +22,14 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<void> _loadProducts() async {
-    try {
-      final products = await ApiService.getProducts();
-      if (!mounted) return;
-      setState(() {
-        _products = products;
-        _isLoading = false;
-      });
+  try {
+    final user = await AuthService.getUser();
+    final products = await ApiService.getProducts(userId: user!.$id);
+    if (!mounted) return;
+    setState(() {
+      _products = products;
+      _isLoading = false;
+    });
     } catch (e) {
       debugPrint("Failed to load products: $e");
       if (!mounted) return;

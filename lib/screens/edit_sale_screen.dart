@@ -36,11 +36,12 @@ class _EditSaleScreenState extends State<EditSaleScreen> {
   }
 
   Future<void> _fetchProducts() async {
-    final products = await ApiService.getProducts();
-    final product = products.firstWhere(
-      (p) => p.name == widget.sale.productName,
-      orElse: () => products.first,
-    );
+   final user = await AuthService.getUser();
+final products = await ApiService.getProducts(userId: user!.$id);
+final product = products.firstWhere(
+  (p) => p.name == widget.sale.productName,
+  orElse: () => products.first,
+);
 
     setState(() {
       _products = products;
