@@ -5,6 +5,7 @@ import 'package:appwrite/models.dart' as appwrite_models;
 
 import '../models/sale.dart';
 import '../services/api_service.dart';
+
 import 'add_sale_screen.dart';
 import 'edit_sale_screen.dart';
 import 'product_screen.dart';
@@ -29,26 +30,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final Color primaryColor = Colors.blue;
   final Color revenueColor = Colors.green;
 
-  String? userName; // <- dynamic user name
+  String? userName; // dynamic user name
 
   @override
   void initState() {
     super.initState();
+    _fetchUser();
     _fetchSales();
-    _fetchUser(); // also grab user on load
   }
 
   Future<void> _fetchUser() async {
     try {
       final client = Client()
-        ..setEndpoint('https://cloud.appwrite.io/v1') // your endpoint
-        ..setProject('YOUR_PROJECT_ID'); // your project ID
+        .setEndpoint('https://cloud.appwrite.io/v1') // replace with your endpoint
+        .setProject('YOUR_PROJECT_ID'); // replace with your project ID
 
       final account = Account(client);
       final appwrite_models.User user = await account.get();
+
       setState(() {
-        // Appwrite has user.name, or you could fall back to email
-        userName = user.name.isNotEmpty ? user.name : user.email;
+        userName = (user.name.isNotEmpty) ? user.name : user.email;
       });
     } catch (e) {
       debugPrint("Failed to fetch user: $e");
@@ -60,13 +61,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchSales() async {
     try {
-      final user = await AuthService.getUser();
-final sales = await ApiService.fetchSales(userId: user!.$id);
-setState(() {
-  _allSales = sales;
-  _applyFilter(_sortOption);
-  _isLoading = false;
-});
+      final client = Client()
+        .setEndpoint('https://cloud.appwrite.io/v1') // your endpoint
+        .setProject('YOUR_PROJECT_ID');
+
+      final account = Account(client);
+      final appwrite_models.User user = await account.get();
+
+      final sales = await ApiService.fetchSales(userId: user.$id);
+
+      setState(() {
+        _allSales = sales;
+        _applyFilter(_sortOption);
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint("Failed to load sales: $e");
       setState(() => _isLoading = false);
@@ -317,7 +325,7 @@ setState(() {
                 Text(
                   userName != null
                       ? "Welcome, $userName"
-                      : "Loading...", // now dynamic
+                      : "Loading...",
                   style: const TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ],
