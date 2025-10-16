@@ -19,13 +19,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _loading = true);
 
     try {
-      // ✅ Just call it, no "response" to capture
+ 
       await AuthService.forgotPassword(
         email: _emailController.text.trim(),
         redirectUrl: "https://yourapp.com/reset-password",
       );
 
-      // ✅ If it didn’t throw, assume success
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Reset link sent. Check your email.")),
       );

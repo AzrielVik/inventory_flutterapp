@@ -1,5 +1,5 @@
 class Product {
-  final String id;       // always String now
+  final String id;      
   final String name;
   final String unitType;
   final double rate;
@@ -14,7 +14,7 @@ class Product {
   // Create Product from API response
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: (json['id'] ?? json['\$id'])?.toString() ?? '', // ✅ force String
+      id: (json['id'] ?? json['\$id'])?.toString() ?? '', 
       name: json['name'] ?? '',
       unitType: json['unit_type'] ?? '',
       rate: (json['rate'] as num).toDouble(),

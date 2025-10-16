@@ -3,7 +3,6 @@ import '../services/api_service.dart';
 import '../models/product.dart';
 import '../services/mpesa_service.dart';
 
-
 class AddSaleScreen extends StatefulWidget {
   const AddSaleScreen({super.key});
 
@@ -25,7 +24,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   String? _checkoutRequestId;
   bool _promptSent = false;
 
-  final Color primaryColor = const Color(0xFFF57C00); // brand color
+  final Color primaryColor = const Color(0xFFF57C00); 
 
   @override
   void initState() {
@@ -139,15 +138,20 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     }
 
     try {
-      final success = await ApiService.addSale(
-        productId: _selectedProduct!.id,
-        customerName: _customerController.text.trim(),
-        total: _totalPrice!,
-        weightPerUnit: _selectedProduct!.unitType == 'kg' ? totalQuantity : null,
-        numUnits: _selectedProduct!.unitType != 'kg' ? totalQuantity.toInt() : null,
-        mpesaNumber: _isMpesa ? _mpesaController.text.trim() : "",
-        userId: currentUser.$id,
-      );
+  final success = await ApiService.addSale(
+    productId: _selectedProduct!.id,
+    productName: _selectedProduct!.name, 
+    customerName: _customerController.text.trim(),
+    pricePerUnit: _selectedProduct!.rate,
+    total: _totalPrice!,
+    weightPerUnit: _selectedProduct!.unitType == 'kg' ? totalQuantity : null,
+    numUnits: _selectedProduct!.unitType != 'kg' ? totalQuantity.toInt() : null,
+    mpesaNumber: _isMpesa ? _mpesaController.text.trim() : "",
+    userId: currentUser.$id,
+    unitType: _selectedProduct!.unitType, 
+    dateSold: DateTime.now().toIso8601String(),
+  );
+
 
       if (!mounted) return;
 

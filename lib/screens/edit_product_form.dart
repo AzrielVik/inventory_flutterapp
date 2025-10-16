@@ -19,7 +19,7 @@ class _EditProductFormState extends State<EditProductForm> {
 
   final List<String> _unitTypes = ['kg', 'unit', 'piece', 'bale'];
 
-  final Color primaryColor = const Color(0xFFF57C00); // brand orange
+  final Color primaryColor = const Color(0xFFF57C00); 
 
   @override
   void initState() {

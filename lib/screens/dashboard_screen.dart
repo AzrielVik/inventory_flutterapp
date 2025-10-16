@@ -42,8 +42,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _fetchUser() async {
     try {
       final client = Client()
-        .setEndpoint('https://cloud.appwrite.io/v1') // replace with your endpoint
-        .setProject('YOUR_PROJECT_ID'); // replace with your project ID
+        .setEndpoint('https://cloud.appwrite.io/v1') 
+        .setProject('68be9c92000402fc5b6f');
 
       final account = Account(client);
       final appwrite_models.User user = await account.get();
@@ -63,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final client = Client()
         .setEndpoint('https://cloud.appwrite.io/v1') // your endpoint
-        .setProject('YOUR_PROJECT_ID');
+        .setProject('68be9c92000402fc5b6f');
 
       final account = Account(client);
       final appwrite_models.User user = await account.get();

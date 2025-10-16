@@ -94,27 +94,37 @@ class ApiService {
     }
   }
 
-  static Future<bool> addSale({
-    required String productId,
-    required String customerName,
-    required double total,
-    required String mpesaNumber,
-    required String userId,
-    double? weightPerUnit,
-    int? numUnits,
-    String? checkoutId,
-  }) async {
-    try {
-      final data = {
-        'product_id': productId,
-        'customer_name': customerName,
-        'total_price': total,
-        'mpesaNumber': mpesaNumber,
-        if (weightPerUnit != null) 'weight_per_unit': weightPerUnit,
-        if (numUnits != null) 'num_units': numUnits,
-        if (checkoutId != null && checkoutId.isNotEmpty)
-          'checkoutId': checkoutId,
-      };
+static Future<bool> addSale({
+  required String productId,
+  required String customerName,
+  required double total,
+  required String mpesaNumber,
+  required String userId,
+  required double pricePerUnit, 
+  double? weightPerUnit,
+  int? numUnits,
+  String? checkoutId,
+  String? productName,
+  String? unitType,
+  String? dateSold,
+}) async {
+  try {
+    final data = {
+      'product_id': productId,
+      'customer_name': customerName,
+      'total_price': total,
+      'mpesaNumber': mpesaNumber,
+      'user_id': userId,
+      'price_per_unit': pricePerUnit, 
+      if (weightPerUnit != null) 'weight_per_unit': weightPerUnit,
+      if (numUnits != null) 'num_units': numUnits,
+      if (checkoutId != null && checkoutId.isNotEmpty) 'checkoutId': checkoutId,
+      if (productName != null) 'product_name': productName,
+      if (unitType != null) 'unit_type': unitType,
+      'date_sold': dateSold ?? DateTime.now().toIso8601String(),
+    };
+
+
 
       await createSale(data, userId: userId);
       return true;

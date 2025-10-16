@@ -27,14 +27,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
 
     try {
-      // 🔑 Login user with Appwrite
+      //Login user with Appwrite
       final appwrite_models.Session session = await AuthService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
       if (session.$id.isNotEmpty) {
-        // ✅ Save session info locally
+        // Save session info locally
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('sessionId', session.$id);
         await prefs.setString('userId', session.userId);
@@ -61,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// ✅ Custom popup for login feedback
+  //Custom popup for login feedback
   void _showPopup(String title, String message,
       {bool isError = false, VoidCallback? onOk}) {
     showDialog(

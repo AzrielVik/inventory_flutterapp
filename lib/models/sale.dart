@@ -1,17 +1,20 @@
 class Sale {
-  final String id;              // always String
+  final String id;              
   final String productType;
   final String productName;
   final double weightPerUnit;
   final int numUnits;
-  final double ratePerKg;       // maps from "price_per_unit"
+  final double ratePerKg;      
   final String customerName;
   final double totalPrice;
   final DateTime date;
 
   // New fields
-  final String mpesaNumber;     // ✅ required in DB
-  final String? checkoutId;     // ✅ optional
+  final String mpesaNumber;    
+  final String? checkoutId;    
+
+
+  final String? unitType;
 
   Sale({
     required this.id,
@@ -23,8 +26,9 @@ class Sale {
     required this.customerName,
     required this.totalPrice,
     required this.date,
-    required this.mpesaNumber,  // ✅ must be passed
-    this.checkoutId,            // ✅ optional
+    required this.mpesaNumber,  
+    this.checkoutId,
+    this.unitType, 
   });
 
   factory Sale.fromJson(Map<String, dynamic> json) {
@@ -40,8 +44,9 @@ class Sale {
       date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
 
       // New fields
-      mpesaNumber: json['mpesaNumber'] ?? '',   // ✅ always string
-      checkoutId: json['checkoutId'],           // ✅ may be null
+      mpesaNumber: json['mpesaNumber'] ?? '',  
+      checkoutId: json['checkoutId'],
+      unitType: json['unit_type'], 
     );
   }
 
@@ -60,11 +65,12 @@ class Sale {
       // New fields
       'mpesaNumber': mpesaNumber,
       if (checkoutId != null) 'checkoutId': checkoutId,
+      if (unitType != null) 'unit_type': unitType, 
     };
   }
 
   @override
   String toString() {
-    return 'Sale(id: $id, productType: $productType, productName: $productName, weightPerUnit: $weightPerUnit, numUnits: $numUnits, ratePerKg: $ratePerKg, customerName: $customerName, totalPrice: $totalPrice, date: $date, mpesaNumber: $mpesaNumber, checkoutId: $checkoutId)';
+    return 'Sale(id: $id, productType: $productType, productName: $productName, weightPerUnit: $weightPerUnit, numUnits: $numUnits, ratePerKg: $ratePerKg, customerName: $customerName, totalPrice: $totalPrice, date: $date, mpesaNumber: $mpesaNumber, checkoutId: $checkoutId, unitType: $unitType)';
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/api_service.dart';
+import '../services/api_service.dart' as api;
 import 'add_product_form.dart';
 import 'edit_product_form.dart';
 
@@ -22,18 +23,30 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<void> _loadProducts() async {
-  try {
-    final user = await AuthService.getUser();
-    final products = await ApiService.getProducts(userId: user!.$id);
-    if (!mounted) return;
-    setState(() {
-      _products = products;
-      _isLoading = false;
-    });
+    setState(() => _isLoading = true);
+    try {
+      final user = await api.AuthService.getUser();
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not logged in')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final products = await ApiService.getProducts(userId: user.$id);
+      if (!mounted) return;
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint("Failed to load products: $e");
       if (!mounted) return;
       setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load products: $e')),
+      );
     }
   }
 
@@ -73,9 +86,17 @@ class _ProductScreenState extends State<ProductScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context); // Close dialog first
-              await ApiService.deleteProduct(product.id);
-              if (!mounted) return;
-              await _loadProducts(); // Refresh after deletion
+              try {
+                final user = await api.AuthService.getUser();
+                if (user == null) return;
+                await ApiService.deleteProduct(product.id);
+                if (!mounted) return;
+                await _loadProducts(); // Refresh after deletion
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to delete product: $e')),
+                );
+              }
             },
             child: const Text('Delete'),
           ),
@@ -129,7 +150,7 @@ class _ProductScreenState extends State<ProductScreen> {
         foregroundColor: Colors.black,
       ),
       body: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0), // space for bottom button
+        padding: const EdgeInsets.only(bottom: 80.0),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _products.isEmpty

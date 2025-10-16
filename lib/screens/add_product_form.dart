@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/api_service.dart';
+import '../services/api_service.dart' as api;
 
 class AddProductForm extends StatefulWidget {
   const AddProductForm({super.key});
@@ -17,8 +17,6 @@ class _AddProductFormState extends State<AddProductForm> {
 
   final List<String> _unitTypes = ['kg', 'unit', 'piece', 'bale'];
   bool _isLoading = false;
-
-  final String _baseUrl = 'http://192.168.8.26:5000';
 
   Future<void> _submitProduct() async {
     if (!_formKey.currentState!.validate()) return;
@@ -37,24 +35,25 @@ class _AddProductFormState extends State<AddProductForm> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/products'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'unit_type': unitType,
-          'rate': rate,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        Navigator.pop(context, true);
-      } else {
-        final error =
-            jsonDecode(response.body)['error'] ?? 'Something went wrong';
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error)));
+      // Get current user ID from Appwrite
+      final user = await api.AuthService.getUser();
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not logged in')),
+        );
+        setState(() => _isLoading = false);
+        return;
       }
+      final userId = user.$id;
+
+      // Call API service to create product
+      await ApiService.createProduct({
+        'name': name,
+        'unit_type': unitType, 
+        'price_per_unit': rate,
+      }, userId: userId);
+
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to add product: $e')),
@@ -66,7 +65,7 @@ class _AddProductFormState extends State<AddProductForm> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Colors.blue; // brand orange
+    final primaryColor = Colors.blue;
 
     return Scaffold(
       appBar: AppBar(

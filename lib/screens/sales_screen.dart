@@ -25,19 +25,26 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   Future<void> fetchSales() async {
-  try {
-    final user = await AuthService.getUser();
-    if (user == null) throw Exception('User not logged in');
+    setState(() => isLoading = true);
+    try {
+      final user = await AuthService.getUser();
+      if (user == null) throw Exception('User not logged in');
 
-    final sales = await ApiService.fetchSales(userId: user.$id);
-    setState(() {
-      allSales = sales;
-      filteredSales = sales;
-      isLoading = false;
-    });
+      final sales = await ApiService.fetchSales(userId: user.$id);
+      if (!mounted) return;
+
+      setState(() {
+        allSales = sales;
+        filteredSales = sales;
+        isLoading = false;
+      });
     } catch (e) {
       debugPrint('Error fetching sales: $e');
+      if (!mounted) return;
       setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching sales: $e')),
+      );
     }
   }
 
@@ -115,7 +122,7 @@ class _SalesScreenState extends State<SalesScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // 🔹 Search bar
+                // Search bar
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: TextField(
@@ -128,7 +135,7 @@ class _SalesScreenState extends State<SalesScreen> {
                   ),
                 ),
 
-                // 🔹 Filter bar
+                // Filter bar
                 SizedBox(
                   height: 40,
                   child: ListView(
@@ -145,7 +152,7 @@ class _SalesScreenState extends State<SalesScreen> {
 
                 const SizedBox(height: 8),
 
-                // 🔹 Sales list
+                // Sales list
                 Expanded(
                   child: filteredSales.isEmpty
                       ? const Center(child: Text('No sales found.'))

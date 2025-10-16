@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
-import '../screens/dashboard_screen.dart'; // ✅ Add your Dashboard import
+import '../screens/dashboard_screen.dart'; 
 import 'package:appwrite/models.dart' as appwrite_models;
-import 'package:appwrite/appwrite.dart'; // For AppwriteException
+import 'package:appwrite/appwrite.dart'; 
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -82,7 +82,7 @@ class _SignupScreenState extends State<SignupScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close popup
+              Navigator.pop(context); 
               if (onOk != null) onOk();
             },
             child: const Text("OK"),

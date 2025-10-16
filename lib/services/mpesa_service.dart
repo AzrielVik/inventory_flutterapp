@@ -6,10 +6,6 @@ class MpesaService {
 
   MpesaService({required this.baseUrl});
 
-  /// Prompt M-Pesa payment via STK Push
-  /// [amount] - total amount to charge
-  /// [phoneNumber] - customer M-Pesa number in 2547XXXXXXXX format
-  /// [reference] - optional reference for the payment
   Future<Map<String, dynamic>> promptPayment({
     required double amount,
     required String phoneNumber,

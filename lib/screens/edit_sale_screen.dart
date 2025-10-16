@@ -36,12 +36,12 @@ class _EditSaleScreenState extends State<EditSaleScreen> {
   }
 
   Future<void> _fetchProducts() async {
-   final user = await AuthService.getUser();
-final products = await ApiService.getProducts(userId: user!.$id);
-final product = products.firstWhere(
-  (p) => p.name == widget.sale.productName,
-  orElse: () => products.first,
-);
+    final user = await AuthService.getUser();
+    final products = await ApiService.getProducts(userId: user!.$id);
+    final product = products.firstWhere(
+      (p) => p.name == widget.sale.productName,
+      orElse: () => products.first,
+    );
 
     setState(() {
       _products = products;
@@ -80,7 +80,7 @@ final product = products.firstWhere(
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Sale updated successfully!')),
           );
-          Navigator.pop(context);
+          Navigator.pop(context, true);
         }
       } catch (e) {
         if (context.mounted) {
@@ -261,7 +261,7 @@ final product = products.firstWhere(
                                   icon: const Icon(Icons.check),
                                   label: const Text('Update Sale'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:  Colors.blue,
+                                    backgroundColor: Colors.blue,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
